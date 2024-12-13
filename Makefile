@@ -1,28 +1,34 @@
-CC := clang
-CXX := clang++
+# compiler ------------------------------------------------------------------@/
+CXX	:= clang++
+CC	:= clang
 
-CWARN := -Wall -Wshadow
-CBASEFLAGS := $(CWARN) -g
+CBASEFLAGS := -Wall -Wshadow -Iinclude
+CFLAGS	:= $(CBASEFLAGS)
 CXXFLAGS := $(CBASEFLAGS) -std=c++20
-CFLAGS := $(CBASEFLAGS)
-LDFLAGS =
 
-SOURCES_CPP = main.cpp
-SOURCES_C = SegaPVRImage.c
-OBJECTS := $(SOURCES_CPP:.cpp=.o)
-OBJECTS += $(SOURCES_C:.c=.o)
-EXECUTABLE = spvr2png
+# output --------------------------------------------------------------------@/
+OBJ_DIR := build
+SRC_DIR := source
+OUTPUT  := bin/spvr2png.exe
 
-all: $(EXECUTABLE)
+SRCS_C   := $(shell find $(SRC_DIR) -name *.c)
+SRCS_CPP := $(shell find $(SRC_DIR) -name *.cpp)
 
-$(EXECUTABLE): $(OBJECTS)
-	$(CXX) $(LDFLAGS) $(OBJECTS) -o $@
+OBJS := $(subst $(SRC_DIR),$(OBJ_DIR),$(SRCS_C:.c=.o))
+OBJS += $(subst $(SRC_DIR),$(OBJ_DIR),$(SRCS_CPP:.cpp=.o))
 
-%.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+# building ------------------------------------------------------------------@/
+all: $(OUTPUT)
 
-%.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+$(OUTPUT): $(OBJS)
+	$(CXX) $^ -o $@
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	$(CC) $(CFLAGS) -c $^ -o $@
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+	$(CXX) $(CXXFLAGS) -c $^ -o $@
 
 clean:
-	rm -f $(OBJECTS) $(EXECUTABLE)
+	rm -rf $(OBJS) $(OUTPUT)
+
