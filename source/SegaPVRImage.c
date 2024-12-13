@@ -18,13 +18,13 @@
 #define kTwiddleTableSize 1024
 unsigned long int gTwiddledTable[kTwiddleTableSize];
 
-unsigned long int		   GetUntwiddledTexelPosition(unsigned long int x, unsigned long int y);
+unsigned long int GetUntwiddledTexelPosition(unsigned long int x, unsigned long int y);
 uint32_t get_untwiddled_index(uint16_t w, uint16_t h, uint32_t p);
 
-int						 MipMapsCountFromWidth(unsigned long int width);
+int MipMapsCountFromWidth(unsigned long int width);
 
 // RGBA Utils
-void						TexelToRGBA( unsigned short int srcTexel, enum TextureFormatMasks srcFormat, unsigned char *r, unsigned char *g, unsigned char *b, unsigned char *a);
+void TexelToRGBA(unsigned short int srcTexel, enum TextureFormatMasks srcFormat, uint8_t* rgba);
 
 unsigned int ToUint16(unsigned char* value)
 {
@@ -32,12 +32,11 @@ unsigned int ToUint16(unsigned char* value)
 }
 
 
-int LoadPVRFromFile(const char* filename, unsigned char** image, unsigned long int* imageSize, struct PVRTHeader* outPvrtHeader)
+bool LoadPVRFromFile(const char* filename, unsigned char** image, unsigned long int* imageSize, struct PVRTHeader* outPvrtHeader)
 {
 	FILE* pFile = fopen(filename, "rb");
-	if (pFile == 0)
-	{
-		return 0;
+	if (pFile == 0) {
+		return false;
 	}
 	
 	fseek(pFile, 0, SEEK_END); // seek to end of file
@@ -55,7 +54,7 @@ int LoadPVRFromFile(const char* filename, unsigned char** image, unsigned long i
 	if (offset == 0)
 	{
 		free(buff);
-		return 0;
+		return false;
 	}
 
 	if (outPvrtHeader)
@@ -67,18 +66,15 @@ int LoadPVRFromFile(const char* filename, unsigned char** image, unsigned long i
 	
 	srcPtr += offset;
 	
-	puts("decoding....");
 	*imageSize = pvrtHeader.width * pvrtHeader.height * 4; // RGBA8888
 	*image = (unsigned char *)malloc(*imageSize);
 	memset(*image, 0, *imageSize);
 	
-	puts("decode start (decodePVR)");
 	DecodePVR(srcPtr, &pvrtHeader, *image);
-	puts("decoded!");
 
 	free(buff);
 	
-	return 1;
+	return true;
 }
 
 unsigned int ReadPVRHeader(unsigned char* srcData, struct PVRTHeader* pvrtHeader)
@@ -100,7 +96,7 @@ unsigned int ReadPVRHeader(unsigned char* srcData, struct PVRTHeader* pvrtHeader
 	return offset;
 }
 
-int DecodePVR(unsigned char* srcData, const struct PVRTHeader* pvrtHeader, unsigned char* dstData)
+bool DecodePVR(unsigned char* srcData, const struct PVRTHeader* pvrtHeader, unsigned char* dstData)
 {
 	const unsigned int kSrcStride = sizeof(unsigned short int);
 	const unsigned int kDstStride = sizeof(unsigned int); // RGBA8888
@@ -153,7 +149,7 @@ int DecodePVR(unsigned char* srcData, const struct PVRTHeader* pvrtHeader, unsig
 			break;
 			
 		default:
-			return 0;
+			return false;
 			break;
 	}
 	
@@ -225,7 +221,7 @@ int DecodePVR(unsigned char* srcData, const struct PVRTHeader* pvrtHeader, unsig
 					srcTexel = ToUint16(&srcVQ[srcPos]);
 					
 					dstPos = ((y * 2 + yoffset) * 2 * mipWidth + (x * 2 + xoffset)) * kDstStride;
-					TexelToRGBA(srcTexel, srcFormat, &dstData[dstPos], &dstData[dstPos + 1], &dstData[dstPos + 2], &dstData[dstPos + 3]);
+					TexelToRGBA(srcTexel, srcFormat, &dstData[dstPos]);
 				}
 			}
 			
@@ -240,23 +236,21 @@ int DecodePVR(unsigned char* srcData, const struct PVRTHeader* pvrtHeader, unsig
 			x = processed % mipWidth;
 			y = processed / mipWidth;
 			
-		//	srcPos = ((isTwiddled) ? GetUntwiddledTexelPosition(x, y) : processed) * kSrcStride;
 			srcPos = processed * kSrcStride;
 			srcTexel = ToUint16(&srcData[srcPos]);
 			
-		//	dstPos = processed * kDstStride;
 			if(isTwiddled) {
 				dstPos = get_untwiddled_index(pvrtHeader->width,pvrtHeader->height,processed) * kDstStride;
 			} else {
 				dstPos = processed * kDstStride;
 			}
-			TexelToRGBA(srcTexel, srcFormat, &dstData[dstPos], &dstData[dstPos + 1], &dstData[dstPos + 2], &dstData[dstPos + 3]);
+			TexelToRGBA(srcTexel, srcFormat, &dstData[dstPos]);
 		}
 		
 		++processed;
 	}
 	
-	return 1;
+	return true;
 }
 
 int MipMapsCountFromWidth(unsigned long int width)
@@ -329,10 +323,13 @@ uint32_t get_untwiddled_index(uint16_t w, uint16_t h, uint32_t p) {
 	return q;
 }
 
-void TexelToRGBA(unsigned short int srcTexel, enum TextureFormatMasks srcFormat, unsigned char *r, unsigned char *g, unsigned char *b, unsigned char *a)
-{
-	switch( srcFormat )
-	{
+void TexelToRGBA(const uint16_t srcTexel, enum TextureFormatMasks srcFormat, uint8_t* rgba) {
+	uint8_t* r = &rgba[0];
+	uint8_t* g = &rgba[1];
+	uint8_t* b = &rgba[2];
+	uint8_t* a = &rgba[3];
+
+	switch( srcFormat ) {
 		case TFM_RGB565:
 			*a = 0xFF;
 			*r = (0x1F&(srcTexel>>11)) << 3;
