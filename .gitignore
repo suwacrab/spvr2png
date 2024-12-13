@@ -1,13 +1,5 @@
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
 workdata/
+build/*.o
+build/*/*.o
+bin/*.exe
 
-# Precompiled Headers
-*.gch
-*.pch
-
-# Fortran module files
-*.mod

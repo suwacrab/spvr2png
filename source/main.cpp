@@ -190,6 +190,7 @@ int ConvertPvr2Png(const std::string& sourceFile, const std::string& destFile)
 int ConvertPng2Pvr(const std::string& sourceFile, const std::string& destFile)
 {
 	std::cout << "Not implemented yet" << std::endl;
+	std::exit(-1);
 	return 1;
 }
 

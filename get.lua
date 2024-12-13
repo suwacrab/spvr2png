@@ -23,10 +23,10 @@ oslib.execf = function(str,...)
 end
 
 for i = 1,30 do
-	local filename_src = ("E:\\EYECATCH\\EYECATCH%02d.PVR"):format(i)
-	local filename_out = ("out\\eyecatch%02d.png"):format(i)
+	local filename_src = ("workdata\\EYECATCHSRC\\EYECATCH%02d.PVR"):format(i)
+	local filename_out = ("workdata\\EYECATCH\\eyecatch%02d.png"):format(i)
 	print(filename_src,filename_out)
-	oslib.execaP("spvr2png.exe",
+	oslib.execaP("bin\\spvr2png.exe",
 		"-s",filename_src,
 		"-d",filename_out,
 		"&&",
