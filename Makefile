@@ -3,8 +3,9 @@ CXX	:= clang++
 CC	:= clang
 
 CBASEFLAGS := -Wall -Wshadow -Iinclude
-CFLAGS	:= $(CBASEFLAGS)
-CXXFLAGS := $(CBASEFLAGS) -std=c++20
+CFLAGS	 := $(CBASEFLAGS)
+CXXFLAGS := $(CBASEFLAGS)
+LDFLAGS  := -static
 
 # output --------------------------------------------------------------------@/
 OBJ_DIR := build
@@ -21,7 +22,7 @@ OBJS += $(subst $(SRC_DIR),$(OBJ_DIR),$(SRCS_CPP:.cpp=.o))
 all: $(OUTPUT)
 
 $(OUTPUT): $(OBJS)
-	$(CXX) $^ -o $@
+	$(CXX) $^ -o $@ $(LDFLAGS)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -c $^ -o $@
